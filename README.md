@@ -13,7 +13,7 @@ To use goPass just build the goPass.go file and execute it. The first time you e
 
 ### Important commands
 
-To add a password use the add-command and fill out the required informations. To get the password back use the get-command with the password name after it. If you forgot a password name use the list-command to display all the password names you stored in goPass. To delete a password use the del-command with the password name following it. If you want to close down goPass use the end-command.
+To add a password use the add-command and fill out the required informations. To get the password back use the get-command with the password name after it. If you forgot a password name use the list-command to display all the password names you stored in goPass. To delete a password use the del-command with the password name following it. If you want to close down goPass use the end-command. Instead of typing the whole command you can also use the first letter of the command and it will do the same. To get more information about a command use the help-command.
 
 ### Settings
 
