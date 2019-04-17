@@ -41,16 +41,31 @@ type settings struct {
 type command struct {
 	cmd      string
 	abbrev   string
-	helptxt  string
 	function func([]string)
+}
+type commandHelp struct {
+	cmd          string
+	abbrev       string
+	shorthelptxt string
+	longhelptxt  string
 }
 
 var commands = []command{
-	{cmd: "get", abbrev: "g", helptxt: "Get a password", function: printPW},
-	{cmd: "list", abbrev: "l", helptxt: "List all passwords", function: listPW},
-	{cmd: "add", abbrev: "a", helptxt: "Add a password", function: addPW},
-	{cmd: "del", abbrev: "d", helptxt: "Delete a password", function: deletePW},
-	{cmd: "settings", abbrev: "s", helptxt: "Change or view a setting", function: sett},
+	{cmd: "get", abbrev: "g", function: printPW},
+	{cmd: "list", abbrev: "l", function: listPW},
+	{cmd: "add", abbrev: "a", function: addPW},
+	{cmd: "del", abbrev: "d", function: deletePW},
+	{cmd: "settings", abbrev: "s", function: sett},
+	{cmd: "help", abbrev: "h", function: help},
+}
+var commandsHelp = []commandHelp{
+	{cmd: "get", abbrev: "g", shorthelptxt: "Get a password", longhelptxt: "get passwordname\n\nGets the password named passwordname from your passwords and prints it"},
+	{cmd: "list", abbrev: "l", shorthelptxt: "Lists all passwords", longhelptxt: "list\n\nList all passwordnames you have saved in goPass"},
+	{cmd: "add", abbrev: "a", shorthelptxt: "Add a password", longhelptxt: "add passwordname password\n\nAdds a password called passwordname with the value password"},
+	{cmd: "del", abbrev: "d", shorthelptxt: "Delete a password", longhelptxt: "del passwordname\n\nDeletes the password called passwordname from goPass. A verification may be necessary"},
+	{cmd: "settings", abbrev: "s", shorthelptxt: "Change or view the settings", longhelptxt: "settings setting [newValue]\n\nWhen no newValue is given it prints out the setting otherwise it sill change it. Possibe settings are askTwice and numWrongPW.\nFor more information call the function with the setting you want information for"},
+	{cmd: "help", abbrev: "h", shorthelptxt: "Get help", longhelptxt: "help [command]\n\nGives you help. When no command is given it will print a short summary of all commands otherwise it will give specific information to the command"},
+	{cmd: "end", abbrev: "e", shorthelptxt: "End goPass", longhelptxt: "end\n\nEnds goPass. Your passwords will all be saved after adding or deleting them so you can also close the console during goPass"},
 }
 
 var path = "./data.json"
@@ -89,7 +104,7 @@ func main() {
 		input := getInput(">")
 		splitIn := strings.Split(input, " ")
 
-		if splitIn[0] == "end" {
+		if splitIn[0] == "end" || splitIn[0] == "e" {
 			return
 		}
 		commandExecuted := false
@@ -211,7 +226,7 @@ func sett(args []string) {
 		return
 	}
 	if len(args) > 2 {
-		fmt.Println("Too many arguments:\n\tsettings setting newValue")
+		fmt.Println("Too many arguments:\n\tsettings setting [newValue]")
 		return
 	}
 
@@ -252,6 +267,19 @@ func sett(args []string) {
 		fmt.Println("Something went wrong")
 	}
 	fmt.Println("Successfully changed the setting", set, "to", val)
+}
+func help(args []string) {
+	if len(args) == 0 {
+		for _, cmd := range commandsHelp {
+			fmt.Printf("%s(%s): %s\n", cmd.cmd, cmd.abbrev, cmd.shorthelptxt)
+		}
+		return
+	}
+	for _, cmd := range commandsHelp {
+		if cmd.cmd == args[0] || cmd.abbrev == args[0] {
+			fmt.Printf("\n%s(%s):\n\t%s\n\n", cmd.cmd, cmd.abbrev, cmd.longhelptxt)
+		}
+	}
 }
 
 //Helper function for addPW to know if a PW with that name already exists
