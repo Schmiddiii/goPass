@@ -13,6 +13,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -60,7 +61,7 @@ var commands = []command{
 }
 var commandsHelp = []commandHelp{
 	{cmd: "get", abbrev: "g", shorthelptxt: "Get a password", longhelptxt: "get passwordname\n\nGets the password named passwordname from your passwords and prints it"},
-	{cmd: "list", abbrev: "l", shorthelptxt: "Lists all passwords", longhelptxt: "list\n\nList all passwordnames you have saved in goPass"},
+	{cmd: "list", abbrev: "l", shorthelptxt: "Lists all passwords", longhelptxt: "list\n\nList all passwordnames you have saved in goPass in alphabetic order"},
 	{cmd: "add", abbrev: "a", shorthelptxt: "Add a password", longhelptxt: "add passwordname password\n\nAdds a password called passwordname with the value password"},
 	{cmd: "del", abbrev: "d", shorthelptxt: "Delete a password", longhelptxt: "del passwordname\n\nDeletes the password called passwordname from goPass. A verification may be necessary"},
 	{cmd: "settings", abbrev: "s", shorthelptxt: "Change or view the settings", longhelptxt: "settings setting [newValue]\n\nWhen no newValue is given it prints out the setting otherwise it sill change it. Possibe settings are askTwice and numWrongPW.\nFor more information call the function with the setting you want information for"},
@@ -149,9 +150,14 @@ func printPW(args []string) {
 
 }
 func listPW(args []string) {
+	var toPrint []string
 	//Iterating over every known password
 	for _, key := range data.Passwords {
-		fmt.Println(string(decrypt([]byte(key.Name), hashedPW)))
+		toPrint = append(toPrint, string(decrypt([]byte(key.Name), hashedPW)))
+	}
+	sort.Slice(toPrint, func(i, j int) bool { return toPrint[i][0] < toPrint[j][0] })
+	for _, str := range toPrint {
+		fmt.Println(str)
 	}
 }
 func addPW(args []string) {
