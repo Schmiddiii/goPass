@@ -40,16 +40,17 @@ type settings struct {
 
 type command struct {
 	cmd      string
+	abbrev   string
 	helptxt  string
 	function func([]string)
 }
 
 var commands = []command{
-	{cmd: "get", helptxt: "Get a password", function: printPW},
-	{cmd: "list", helptxt: "List all passwords", function: listPW},
-	{cmd: "add", helptxt: "Add a password", function: addPW},
-	{cmd: "del", helptxt: "Delete a password", function: deletePW},
-	{cmd: "settings", helptxt: "Change or view a setting", function: sett},
+	{cmd: "get", abbrev: "g", helptxt: "Get a password", function: printPW},
+	{cmd: "list", abbrev: "l", helptxt: "List all passwords", function: listPW},
+	{cmd: "add", abbrev: "a", helptxt: "Add a password", function: addPW},
+	{cmd: "del", abbrev: "d", helptxt: "Delete a password", function: deletePW},
+	{cmd: "settings", abbrev: "s", helptxt: "Change or view a setting", function: sett},
 }
 
 var path = "./data.json"
@@ -93,7 +94,7 @@ func main() {
 		}
 		commandExecuted := false
 		for _, cmd := range commands {
-			if splitIn[0] == cmd.cmd {
+			if splitIn[0] == cmd.cmd || splitIn[0] == cmd.abbrev {
 				cmd.function(splitIn[1:])
 				commandExecuted = true
 				break
