@@ -22,17 +22,6 @@ import (
 )
 
 var lock sync.Mutex
-var marshal = func(v interface{}) (io.Reader, error) {
-	b, err := json.MarshalIndent(v, "", "\t")
-	if err != nil {
-		return nil, err
-	}
-	return bytes.NewReader(b), nil
-}
-var unmarshal = func(r io.Reader, v interface{}) error {
-	return json.NewDecoder(r).Decode(v)
-}
-
 var reader = bufio.NewReader(os.Stdin)
 
 type dataStruct struct {
@@ -49,11 +38,24 @@ type settings struct {
 	NumWrongPW int
 }
 
+type command struct {
+	cmd      string
+	helptxt  string
+	function func([]string)
+}
+
+var commands = []command{
+	{cmd: "get", helptxt: "Get a password", function: printPW},
+	{cmd: "list", helptxt: "List all passwords", function: listPW},
+	{cmd: "add", helptxt: "Add a password", function: addPW},
+	{cmd: "del", helptxt: "Delete a password", function: deletePW},
+	{cmd: "settings", helptxt: "Change or view a setting", function: sett},
+}
+
 var path = "./data.json"
 
 var data dataStruct
 var hashedPW string
-var cryptKey string
 
 func main() {
 
@@ -86,111 +88,139 @@ func main() {
 		input := getInput(">")
 		splitIn := strings.Split(input, " ")
 
-		switch splitIn[0] {
-		case "get":
-			if len(splitIn) == 1 {
-				fmt.Println("Missing argument: Password to print")
-				break
-			}
-			printPW(splitIn[1])
-			break
-		case "list":
-			listPW()
-			break
-		case "add":
-			addPW()
-			break
-		case "del":
-			if len(splitIn) == 1 {
-				fmt.Println("Missing argument: Password to delete")
-				break
-			}
-			deletePW(splitIn[1])
-			break
-		case "settings":
-			if len(splitIn) == 1 {
-				fmt.Println("Missing argument: Setting to display (e.g. askTwice, numWrongPW); Not required argument: Value to change the setting to")
-				break
-			}
-			if len(splitIn) == 2 {
-				sett(splitIn[1], "")
-				break
-			}
-			sett(splitIn[1], splitIn[2])
-		case "end":
+		if splitIn[0] == "end" {
 			return
-		default:
-			fmt.Println("I don´t know this command.")
-			break
 		}
+		commandExecuted := false
+		for _, cmd := range commands {
+			if splitIn[0] == cmd.cmd {
+				cmd.function(splitIn[1:])
+				commandExecuted = true
+				break
+			}
+		}
+		if !commandExecuted {
+			fmt.Println("I don´t know that command.")
+		}
+
 	}
 
 }
 
 //Manipulating the passwords
-func printPW(pw string) {
-	//Iterating over every known password
-	for _, key := range data.Passwords {
-		if string(decrypt([]byte(key.Name), hashedPW)) == pw {
-			fmt.Println(string(decrypt([]byte(key.Password), hashedPW)))
-			return
-		}
+func printPW(args []string) {
+	if len(args) == 0 {
+		fmt.Println("Too few arguments:\n\tget password")
 	}
-	fmt.Println("No such password")
+
+	//Iterating over every argument
+	for _, arg := range args {
+		foundPW := false
+		//Iterating over every known password
+		for _, key := range data.Passwords {
+
+			if string(decrypt([]byte(key.Name), hashedPW)) == arg {
+				fmt.Println(arg, ":", string(decrypt([]byte(key.Password), hashedPW)))
+				foundPW = true
+				break
+			}
+		}
+		if !foundPW {
+			fmt.Println(arg, ": No such password")
+		}
+
+	}
+
 }
-func listPW() {
+func listPW(args []string) {
 	//Iterating over every known password
 	for _, key := range data.Passwords {
 		fmt.Println(string(decrypt([]byte(key.Name), hashedPW)))
 	}
 }
-func addPW() {
+func addPW(args []string) {
+
+	if len(args) < 2 {
+		fmt.Println("Too few arguments:\n\tadd passwordname password")
+		return
+	}
+	if len(args) > 2 {
+		fmt.Println("Too many arguments:\n\tadd passwordname password")
+		return
+	}
 	var pw password
 
-	rawName := getInput("Name: ")
-	pw.Name = encrypt([]byte(rawName), hashedPW)
-	if existPW([]byte(rawName)) {
+	pw.Name = encrypt([]byte(args[0]), hashedPW)
+	if existPW([]byte(args[0])) {
 		fmt.Println("A password with that name already exists")
 		return
 	}
-	pw.Password = encrypt([]byte(getInput("Password : ")), hashedPW)
+	pw.Password = encrypt([]byte(args[1]), hashedPW)
 
 	data.Passwords = append(data.Passwords, pw)
 
 	err := saveData()
 
 	if err != nil {
-		fmt.Println("Something went wrong")
+		fmt.Println("Something went wrong:", err)
 		return
 	}
 	fmt.Println("New password saved")
 }
-func deletePW(pw string) {
-	if data.Settings.AskTwice {
-		verify()
-	}
-	//Iterating over every known password
-	for index, key := range data.Passwords {
-		if string(decrypt(key.Name, hashedPW)) == pw {
-			//Delete password
-			data.Passwords = append(data.Passwords[:index], data.Passwords[index+1:]...)
+func deletePW(args []string) {
 
-			err := saveData()
-			if err != nil {
-				fmt.Println("Something went wrong")
-				return
+	if len(args) == 0 {
+		fmt.Println("Too few arguments:\n\tdel passwordname")
+	}
+
+	for _, pw := range args {
+		if data.Settings.AskTwice {
+			fmt.Println("Deleting password: ", pw)
+			verify()
+		}
+		deletedPW := false
+		//Iterating over every known password
+		for index, key := range data.Passwords {
+			if string(decrypt(key.Name, hashedPW)) == pw {
+				//Delete password
+				data.Passwords = append(data.Passwords[:index], data.Passwords[index+1:]...)
+
+				deletedPW = true
+
+				err := saveData()
+				if err != nil {
+					fmt.Println("Something went wrong")
+					return
+				}
+				fmt.Println("Successfully deleted the password:", pw)
+				break
 			}
-			fmt.Println("Successfully deleted the password")
-			return
+		}
+		if !deletedPW {
+			fmt.Println("No such password:", pw)
 		}
 	}
-
-	fmt.Println("No such password")
 
 }
 
 //Manipulate settings
-func sett(set, val string) {
+func sett(args []string) {
+	if len(args) < 1 {
+		fmt.Println("Too few arguments:\n\tsettings setting [newValue]")
+		return
+	}
+	if len(args) > 2 {
+		fmt.Println("Too many arguments:\n\tsettings setting newValue")
+		return
+	}
+
+	set := args[0]
+	val := ""
+	//Changing a setting
+	if len(args) == 2 {
+		val = args[1]
+	}
+
 	switch set {
 	case "askTwice":
 		switch val {
@@ -220,7 +250,7 @@ func sett(set, val string) {
 	if err != nil {
 		fmt.Println("Something went wrong")
 	}
-	fmt.Println("Successfully changed the settings")
+	fmt.Println("Successfully changed the setting", set, "to", val)
 }
 
 //Helper function for addPW to know if a PW with that name already exists
@@ -290,6 +320,17 @@ func decrypt(data []byte, passphrase string) []byte {
 		panic(err.Error())
 	}
 	return plaintext
+}
+
+var marshal = func(v interface{}) (io.Reader, error) {
+	b, err := json.MarshalIndent(v, "", "\t")
+	if err != nil {
+		return nil, err
+	}
+	return bytes.NewReader(b), nil
+}
+var unmarshal = func(r io.Reader, v interface{}) error {
+	return json.NewDecoder(r).Decode(v)
 }
 
 //Getting different kinds of inputs

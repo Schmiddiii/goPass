@@ -3,7 +3,7 @@
 
 A password management system written in go.
 
-**I am not responsible for the savety of your passwords. I am not a security professional, this is only a hobby project.**
+**I am not responsible for the safety of your passwords. I am not a security professional, this is only a hobby project.**
 
 ## Usage
 
@@ -21,4 +21,4 @@ To change the settings use the settings-command followed by the setting you want
 
 ## Additioal information
 
-You may want to hide the data.json file (In Windows by right-clicking and changing to property hidden). If you find yourself using goPass very often you may want to add a [AutoHotkey](https://www.autohotkey.com/)-script to open it using a keyboard shortcut.
+If you find yourself using goPass very often you may want to add a [AutoHotkey](https://www.autohotkey.com/)-script to open it using a keyboard shortcut.
