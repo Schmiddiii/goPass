@@ -19,6 +19,7 @@ import (
 	"sync"
 	"syscall"
 
+	"github.com/atotto/clipboard"
 	"golang.org/x/crypto/ssh/terminal"
 )
 
@@ -53,6 +54,7 @@ type commandHelp struct {
 
 var commands = []command{
 	{cmd: "get", abbrev: "g", function: printPW},
+	{cmd: "clip", abbrev: "c", function: clipPW},
 	{cmd: "list", abbrev: "l", function: listPW},
 	{cmd: "add", abbrev: "a", function: addPW},
 	{cmd: "del", abbrev: "d", function: deletePW},
@@ -61,6 +63,7 @@ var commands = []command{
 }
 var commandsHelp = []commandHelp{
 	{cmd: "get", abbrev: "g", shorthelptxt: "Get a password", longhelptxt: "get passwordname\n\nGets the password named passwordname from your passwords and prints it"},
+	{cmd: "clip", abbrev: "c", shorthelptxt: "Copies a password", longhelptxt: "clip passwordname\n\nSets the value of your clipboard to the password you asked for"},
 	{cmd: "list", abbrev: "l", shorthelptxt: "Lists all passwords", longhelptxt: "list\n\nList all passwordnames you have saved in goPass in alphabetic order"},
 	{cmd: "add", abbrev: "a", shorthelptxt: "Add a password", longhelptxt: "add passwordname password\n\nAdds a password called passwordname with the value password"},
 	{cmd: "del", abbrev: "d", shorthelptxt: "Delete a password", longhelptxt: "del passwordname\n\nDeletes the password called passwordname from goPass. A verification may be necessary"},
@@ -147,6 +150,29 @@ func printPW(args []string) {
 		}
 
 	}
+
+}
+
+//Manipulating the passwords
+func clipPW(args []string) {
+	if len(args) == 0 {
+		fmt.Println("Too few arguments:\n\tclip password")
+	}
+
+	//Iterating over every known password
+	for _, key := range data.Passwords {
+
+		if string(decrypt([]byte(key.Name), hashedPW)) == args[0] {
+			err := clipboard.WriteAll(string(decrypt([]byte(key.Password), hashedPW)))
+			if err != nil {
+				fmt.Println("Something went wrong:", err)
+				return
+			}
+			fmt.Println("Copied password to clipboard:", args[0])
+			return
+		}
+	}
+	fmt.Println(args[0], ": No such password")
 
 }
 func listPW(args []string) {
