@@ -12,12 +12,14 @@ import (
 	"fmt"
 	"io"
 	"log"
+	randMath "math/rand"
 	"os"
 	"sort"
 	"strconv"
 	"strings"
 	"sync"
 	"syscall"
+	"time"
 
 	"github.com/atotto/clipboard"
 	"golang.org/x/crypto/ssh/terminal"
@@ -65,7 +67,7 @@ var commandsHelp = []commandHelp{
 	{cmd: "get", abbrev: "g", shorthelptxt: "Get a password", longhelptxt: "get passwordname\n\nGets the password named passwordname from your passwords and prints it"},
 	{cmd: "clip", abbrev: "c", shorthelptxt: "Copies a password", longhelptxt: "clip passwordname\n\nSets the value of your clipboard to the password you asked for"},
 	{cmd: "list", abbrev: "l", shorthelptxt: "Lists all passwords", longhelptxt: "list\n\nList all passwordnames you have saved in goPass in alphabetic order"},
-	{cmd: "add", abbrev: "a", shorthelptxt: "Add a password", longhelptxt: "add passwordname password\n\nAdds a password called passwordname with the value password"},
+	{cmd: "add", abbrev: "a", shorthelptxt: "Add a password", longhelptxt: "add passwordname password\n\nAdds a password called passwordname with the value password, if password is generatePW it will generate a random password and copy it to your clipboard"},
 	{cmd: "del", abbrev: "d", shorthelptxt: "Delete a password", longhelptxt: "del passwordname\n\nDeletes the password called passwordname from goPass. A verification may be necessary"},
 	{cmd: "settings", abbrev: "s", shorthelptxt: "Change or view the settings", longhelptxt: "settings setting [newValue]\n\nWhen no newValue is given it prints out the setting otherwise it sill change it. Possibe settings are askTwice and numWrongPW.\nFor more information call the function with the setting you want information for"},
 	{cmd: "help", abbrev: "h", shorthelptxt: "Get help", longhelptxt: "help [command]\n\nGives you help. When no command is given it will print a short summary of all commands otherwise it will give specific information to the command"},
@@ -203,7 +205,18 @@ func addPW(args []string) {
 		fmt.Println("A password with that name already exists")
 		return
 	}
-	pw.Password = encrypt([]byte(args[1]), hashedPW)
+	if args[1] != "generatePW" {
+		pw.Password = encrypt([]byte(args[1]), hashedPW)
+	} else {
+		pas:=randomPW(10)
+		pw.Password = encrypt([]byte(pas), hashedPW)
+		err:=clipboard.WriteAll(pas)
+		if err!=nil{
+			fmt.Println("Something went wrong with the clipboard: ", err)
+		}else{
+			fmt.Println("Copied new password to clipboard")
+		}
+	}
 
 	data.Passwords = append(data.Passwords, pw)
 
@@ -343,6 +356,19 @@ func verify() {
 
 }
 
+// Create a random Passwords
+func randomPW(n int) string{
+	r:=randMath.New(randMath.NewSource(time.Now().UnixNano()))
+	alphabet:="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!%&?#+-*,."
+	pw := ""
+
+	for i:=0;i<n;i++{
+		pw+=string(alphabet[r.Intn(len(alphabet))])
+	}
+
+	return pw
+}
+
 //Cryptography from https://www.thepolyglotdeveloper.com/2018/02/encrypt-decrypt-data-golang-application-crypto-packages/
 func createHash(key string) string {
 	hasher := md5.New()
@@ -400,6 +426,9 @@ func getInput(prefix string) string {
 	text, _ := reader.ReadString('\n')
 	//Deleting the end of the line
 	text = strings.Replace(text, "\r\n", "", -1)
+	text = strings.Replace(text, "\n", "", -1)
+	text = strings.Replace(text, "\r", "", -1)
+
 	return text
 }
 

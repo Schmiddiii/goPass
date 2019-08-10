@@ -1,0 +1,33 @@
+{
+	"PWHashHash": "b8498ee29e56e711a268ae8cc461ae94",
+	"Passwords": [
+		{
+			"Name": "xwEK0Q4TwXAwmhFB3t9nzjVbkVtqDIXQO3XitESA",
+			"Password": "wc/L2dT7hlWPvMaW/zmDfGuyVGu7Awf+9ZJngXDAs1uDBfJcWs2A"
+		},
+		{
+			"Name": "mT8adlaNBetQ5BWwbPLOwj+XirDF0NPGGRJpF4JI5Q==",
+			"Password": "zGhFkhDHpsKmSuc1X1+06zncF6sn60LayLwe5jMgfH9HoKhinGU="
+		},
+		{
+			"Name": "k9zTV/Ts1RFtvQD3m6XTMXu76mhu8EG4jKJcWT+lhw==",
+			"Password": "jBBy4HAswSC6+uqRxCC+kv7ocvjLycSV5724zgu8eT2s3J0vMUbl9A=="
+		},
+		{
+			"Name": "KyObVMpIGqcfLu/Jfq+9oZSjziaxtNZAnAyk9Km/dw==",
+			"Password": "MBQCv5w07lR6kZwzwzFvPRWmr70FRs55rZKyZ+yGW5GqM7fRvbE="
+		},
+		{
+			"Name": "Ju7ZUfCnmmnLcQnyI8XaOhJnTxEtudI1WNCYHxLIjA==",
+			"Password": "vzAC9d2i8o7e+h1rZ7NnsQwUDiFUUpIRW/I6XERUbTOq9RsXIiU="
+		},
+		{
+			"Name": "eFvtD8mFm1OUW0wYx3ogcLu+8cwQTZIU/SqPAyzWFQ==",
+			"Password": "Hoe2wiOfhPUgLS5UUsmDHg/ZpZ083JQrvYRDLQ7oGFqcRS8wKXw="
+		}
+	],
+	"Settings": {
+		"AskTwice": true,
+		"NumWrongPW": 3
+	}
+}
